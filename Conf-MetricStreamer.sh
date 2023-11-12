@@ -7,4 +7,4 @@ sudo apt update
 sudo apt install -y docker.io
 
 # Run the Docker container with the 'always' restart policy
-sudo docker run --restart always amiraniv/metricstreamer-final:v2.0
+sudo docker run --restart always amiraniv/metricstreamer-amiraniv-sqs:v1.0

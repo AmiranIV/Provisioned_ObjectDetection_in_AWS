@@ -1,0 +1,15 @@
+{
+   "TargetValue": 1,
+   "CustomizedMetricSpecification": {
+      "MetricName": "ApproximateNumberOfMessagesVisible",
+      "Namespace": "AWS/SQS",
+      "Dimensions": [
+         {
+            "Name": "QueueName",
+            "Value": "YOUR_QUEUE_NAME"
+         }
+      ],
+      "Statistic": "Sum",
+      "Unit": "Count"
+   }
+}

@@ -24,6 +24,6 @@ Scaling Metrics and Management:
 metricStreamer Microservice: Introduce a new microservice to calculate BacklogPerInstance, enabling the AutoscalingGroup to dynamically adjust the Yolo5 instances based on the queue workload, ensuring efficient resource allocation.
 This architecture aims for a scalable and efficient Object Detection Service on AWS, integrating multiple services and enabling automatic scaling based on queue workload metrics.
 
-# Result
+## The App: 
 ![9fb1c7fc-8e13-4873-8a88-8905b29dfa47](https://github.com/AmiranIV/Provisioned_ObjectDetection_in_AWS/assets/109898333/2a12c29a-c294-4ce0-b981-aad4ef45a081)
 

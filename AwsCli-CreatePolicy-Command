@@ -1,0 +1,1 @@
+aws autoscaling put-scaling-policy --policy-name sqs-scaling-policy   --auto-scaling-group-name <ASG-NAME>   --policy-type TargetTrackingScaling   --target-tracking-configuration file://~/config.json

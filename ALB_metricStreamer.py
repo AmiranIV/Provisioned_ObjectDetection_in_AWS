@@ -1,58 +1,60 @@
 import boto3
 import time
 
-# Your configuration settings
-AUTOSCALING_GROUP_NAME = 'ASG-Yolov-AmiranIV-Worker'
+# AWS configuration
+region_name = 'eu-north-1'
+AUTOSCALING_GROUP_NAME ='ASG-Yolov-AmiranIV-Worker'
 QUEUE_NAME = 'AmiranIV-AWS-Queue'
-namespace = 'Yolo5Metrics'  
+NAMESPACE = 'AmiranIV-cloudwatch'
+METRIC_NAME = 'AmiranIV-BacklogPerInstance'
+
+# Initialize AWS clients
+sqs_client = boto3.client('sqs', region_name=region_name)  # Use sqs client
+asg_client = boto3.client('autoscaling', region_name=region_name)
+cloudwatch_client = boto3.client('cloudwatch', region_name=region_name)
 
 while True:
-    # Initialize AWS clients
-    sqs_client = boto3.resource('sqs', region_name='eu-north-1')
-    asg_client = boto3.client('autoscaling', region_name='eu-north-1')
-    cloudwatch_client = boto3.client('cloudwatch', region_name='eu-north-1')
+    try:
+        # Get the number of messages in the SQS queue
+        queue_url = f'https://sqs.eu-north-1.amazonaws.com/352708296901/AmiranIV-AWS-Queue'
+        response = sqs_client.get_queue_attributes(
+            QueueUrl=queue_url,
+            AttributeNames=['ApproximateNumberOfMessages']
+        )
+        msgs_in_queue = int(response['Attributes']['ApproximateNumberOfMessages'])
 
-    # Get queue attributes
-    queue = sqs_client.get_queue_by_name(QueueName=QUEUE_NAME)
-    msgs_in_queue = int(queue.attributes.get('ApproximateNumberOfMessages'))
+        # Get the desired capacity of the Auto Scaling Group
+        asg_response = asg_client.describe_auto_scaling_groups(AutoScalingGroupNames=[AUTOSCALING_GROUP_NAME])
+        if not asg_response['AutoScalingGroups']:
+            raise RuntimeError('Autoscaling group not found')
+        asg_size = asg_response['AutoScalingGroups'][0]['DesiredCapacity']
 
-    # Get Auto Scaling Group information
-    asg_groups = asg_client.describe_auto_scaling_groups(AutoScalingGroupNames=[AUTOSCALING_GROUP_NAME])[
-        'AutoScalingGroups']
+        print(f'Messages in Queue: {msgs_in_queue}')
+        print(f'Desired Capacity of ASG: {asg_size}')
 
-    if not asg_groups:
-        raise RuntimeError('Autoscaling group not found')
-    else:
-        asg_size = asg_groups[0]['DesiredCapacity']
+        # Avoid division by zero
+        if asg_size == 0 and msgs_in_queue > 0:
+            backlog_per_instance = 2
+        elif asg_size == 0 and msgs_in_queue == 0:
+            backlog_per_instance = 0
+        else:
+            backlog_per_instance = msgs_in_queue / asg_size
 
-    # Check if there are instances in the ASG before dividing
-    if asg_size > 0:
-        backlog_per_instance = msgs_in_queue / asg_size
-    else:
-        backlog_per_instance = 0  # Set a default value or handle this case as needed
+        # Send the metric to CloudWatch
+        cloudwatch_client.put_metric_data(
+            Namespace=NAMESPACE,
+            MetricData=[
+                {
+                    'MetricName': METRIC_NAME,
+                    'Value': backlog_per_instance,
+                    'Unit': 'None'
+                }
+            ]
+        )
 
-    # Send backlog_per_instance to CloudWatch
-    metric_name = 'BacklogPerInstance'
-    dimensions = [
-        {
-            'Name': 'AutoScalingGroupName',
-            'Value': AUTOSCALING_GROUP_NAME
-        }
-    ]
+        print(f'BacklogPerInstance: {backlog_per_instance}')
 
-    response = cloudwatch_client.put_metric_data(
-        Namespace=namespace,
-        MetricData=[
-            {
-                'MetricName': metric_name,
-                'Dimensions': dimensions,
-                'Value': backlog_per_instance,
-                'Unit': 'None'  
-            }
-        ]
-    )
+    except Exception as e:
+        print(f'Error: {str(e)}')
 
-    print(f'Sent {metric_name} metric to CloudWatch with value: {backlog_per_instance}')
-
-    # Sleep for 30 seconds before running the loop again
-    time.sleep(30)
+    time.sleep(10)  # Run every 10 seconds

@@ -1,14 +1,8 @@
 {
    "TargetValue": 1,
    "CustomizedMetricSpecification": {
-      "MetricName": "ApproximateNumberOfMessagesVisible",
-      "Namespace": "AWS/SQS",
-      "Dimensions": [
-         {
-            "Name": "QueueName",
-            "Value": "YOUR_QUEUE_NAME"
-         }
-      ],
+      "MetricName": "AmiranIV-BacklogPerInstance",
+      "Namespace": "AmiranIV-cloudwatch",
       "Statistic": "Sum",
       "Unit": "Count"
    }

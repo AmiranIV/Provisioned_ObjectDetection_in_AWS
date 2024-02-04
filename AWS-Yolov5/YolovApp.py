@@ -107,7 +107,7 @@ def consume():
                 dynamoTable.put_item(Item=Files2DynamoDB)
                 time.sleep(2)
 
-                url = f'<APPLICATION-LOAD-BALANCER-URL>'={prediction_id}'
+                url = f'http://APPLICATION-LOAD-BALANCER-URL.com'/results/?predictionId={prediction_id}'
                 requests.get(url=url)
                 time.sleep(7)
 
